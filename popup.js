@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const particles = document.querySelectorAll('.particle');
     const gifElement = document.getElementById('dynamic-gif');
-    const totalGifs = 5;
+    const totalGifs = 6;
     
     // Bulletproof GIF cycling with multiple fallbacks
     initializeGifCycling();
