@@ -1,0 +1,210 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 300px;
+    height: 217px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    color: #ffffff;
+    overflow: hidden;
+    position: relative;
+}
+
+.container {
+    width: 100%;
+    height: 217px;
+    position: relative;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Enhanced Animated Background */
+.bg-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    width: 2.5px;
+    height: 2.5px;
+    background: radial-gradient(circle, #ffd700, #ff8c00);
+    border-radius: 50%;
+    opacity: 0.7;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    animation: randomFloat 10s infinite ease-in-out;
+}
+
+/* Particle positions */
+.particle:nth-child(1) { top: 12%; left: 18%; animation-delay: 0s; }
+.particle:nth-child(2) { top: 78%; left: 82%; animation-delay: 1.2s; }
+.particle:nth-child(3) { top: 32%; left: 72%; animation-delay: 2.4s; }
+.particle:nth-child(4) { top: 58%; left: 28%; animation-delay: 0.8s; }
+.particle:nth-child(5) { top: 88%; left: 52%; animation-delay: 3.6s; }
+.particle:nth-child(6) { top: 22%; left: 88%; animation-delay: 1.6s; }
+.particle:nth-child(7) { top: 73%; left: 12%; animation-delay: 2.8s; }
+.particle:nth-child(8) { top: 43%; left: 62%; animation-delay: 0.4s; }
+.particle:nth-child(9) { top: 17%; left: 42%; animation-delay: 4s; }
+.particle:nth-child(10) { top: 83%; left: 77%; animation-delay: 2s; }
+.particle:nth-child(11) { top: 53%; left: 7%; animation-delay: 3.2s; }
+.particle:nth-child(12) { top: 27%; left: 78%; animation-delay: 1.4s; }
+.particle:nth-child(13) { top: 68%; left: 37%; animation-delay: 2.6s; }
+.particle:nth-child(14) { top: 38%; left: 93%; animation-delay: 0.6s; }
+.particle:nth-child(15) { top: 93%; left: 23%; animation-delay: 3.8s; }
+
+@keyframes randomFloat {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 0.7;
+    }
+    25% {
+        transform: translate(14px, -17px) scale(1.3) rotate(90deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-10px, -28px) scale(0.8) rotate(180deg);
+        opacity: 0.5;
+    }
+    75% {
+        transform: translate(17px, -12px) scale(1.1) rotate(270deg);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translate(0, 0) scale(1) rotate(360deg);
+        opacity: 0.7;
+    }
+}
+
+/* Header */
+.header {
+    position: relative;
+    z-index: 10;
+    animation: slideDown 0.6s ease-out;
+    flex-shrink: 0;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.logo-icon {
+    font-size: 22px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.logo-text .brand {
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff9800, #ff6f00);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo-text .subtitle {
+    font-size: 9px;
+    color: #9e9e9e;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 7px rgba(255, 152, 0, 0.5);
+    }
+    to {
+        text-shadow: 0 0 14px rgba(255, 152, 0, 0.8);
+    }
+}
+
+/* Content Area - Perfect Centering */
+.content {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: slideUp 0.8s ease-out 0.2s both;
+}
+
+.center-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 140px;
+    position: relative;
+}
+
+/* Dynamic GIF - Perfect Centering with Smooth Transitions */
+.animated-gif {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+    animation: gifBounce 3s ease-in-out infinite;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: scale(1);
+}
+
+@keyframes gifBounce {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.animated-gif:hover {
+    animation-play-state: paused;
+    transform: scale(1.1) translateY(-5px);
+    filter: drop-shadow(0 6px 15px rgba(255, 152, 0, 0.4));
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
