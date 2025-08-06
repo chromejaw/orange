@@ -1,11 +1,11 @@
 (function() {
     'use strict';
 
-    // Early detection flag
     let monacoHooked = false;
     let clipboardEnabled = false;
+    let editorRegistry = new Map(); // Track all Monaco instances
 
-    // Aggressive CSS override for text selection
+    // Advanced CSS injection for text selection liberation
     function injectSelectionCSS() {
         const css = `
             *, *::before, *::after, ::slotted(*) {
@@ -17,18 +17,15 @@
                 cursor: auto !important;
             }
 
-            /* Force visibility and interaction */
             .monaco-editor, .monaco-editor * {
                 user-select: text !important;
                 pointer-events: auto !important;
             }
 
-            /* Remove only blocking overlays (keep monaco-mouse-cursor-text visible) */
             .textAreaCover {
                pointer-events: none !important;
             }
 
-            /* Enable selection highlighting */
             ::selection {
                 background: #b3d4fc !important;
                 color: #000 !important;
@@ -39,7 +36,6 @@
                 color: #000 !important;
             }
 
-            /* Shadow DOM support */
             ::shadow *, /deep/ * {
                 user-select: text !important;
             }
@@ -51,109 +47,61 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
-    // Block future event listener registrations
+    // Nuclear event listener blocking - complete override
     function blockEventListeners() {
-        const blockedEvents = ['copy', 'cut', 'paste', 'selectstart', 'contextmenu', 'keydown', 'keyup'];
+        const blockedEvents = ['copy', 'cut', 'paste', 'selectstart', 'contextmenu'];
         const originalAddEventListener = EventTarget.prototype.addEventListener;
 
         EventTarget.prototype.addEventListener = function(type, listener, options) {
             if (blockedEvents.includes(type.toLowerCase())) {
-                return; // Silently drop the listener
+                return; // Nuclear block - no exceptions
             }
             return originalAddEventListener.call(this, type, listener, options);
         };
 
-        // Clear existing global handlers
+        // Clear ALL existing handlers
         blockedEvents.forEach(event => {
             document['on' + event] = null;
             window['on' + event] = null;
         });
     }
 
-    // Dynamic DOM cleanup
-    function setupDOMCleanup() {
-        function cleanElement(element) {
-            if (!element || !element.removeAttribute) return;
-
-            // Remove blocking attributes
-            ['oncopy', 'oncut', 'onpaste', 'onselectstart', 'oncontextmenu',
-             'ondragstart', 'inert', 'draggable'].forEach(attr => {
-                element.removeAttribute(attr);
-            });
-
-            // Force text selection styles
-            if (element.style) {
-                element.style.userSelect = 'text';
-                element.style.webkitUserSelect = 'text';
-                element.style.MozUserSelect = 'text';
-                element.style.msUserSelect = 'text';
-            }
-
-            // Remove overlay classes
-            if (element.classList) {
-                element.classList.remove('no-select', 'noselect', 'unselectable');
-            }
-        }
-
-        // Clean existing elements
-        document.querySelectorAll('*').forEach(cleanElement);
-
-        // Watch for new elements
-        const observer = new MutationObserver(mutations => {
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) { // Element node
-                        cleanElement(node);
-                        if (node.querySelectorAll) {
-                            node.querySelectorAll('*').forEach(cleanElement);
-                        }
-                    }
-                });
-            });
-        });
-
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['oncopy', 'oncut', 'onpaste', 'onselectstart', 'oncontextmenu']
-        });
-    }
-
-    // Advanced clipboard operations with fallbacks
+    // Advanced clipboard operations with raw handling
     async function copyToClipboard(text) {
         if (!text) return false;
 
         try {
-            // Modern Clipboard API
+            // Modern Clipboard API (preferred)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(text);
                 return true;
             }
         } catch (e) {
-            // Clipboard API failed, using fallback
+            console.debug('Clipboard API failed, using nuclear fallback');
         }
 
         try {
-            // Legacy fallback
+            // Nuclear fallback with absolute formatting preservation
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
             textarea.style.opacity = '0';
+            textarea.style.whiteSpace = 'pre';
+            textarea.style.fontFamily = 'monospace';
+            textarea.style.fontSize = '12px';
             document.body.appendChild(textarea);
+            textarea.focus();
             textarea.select();
             textarea.setSelectionRange(0, text.length);
 
             const success = document.execCommand('copy');
             document.body.removeChild(textarea);
-
-            if (success) {
-                return true;
-            }
+            return success;
         } catch (e) {
-            // All copy methods failed
+            console.warn('Nuclear copy failed:', e);
         }
-
         return false;
     }
 
@@ -164,189 +112,521 @@
                 return text;
             }
         } catch (e) {
-            // Clipboard read failed
+            console.debug('Clipboard read failed:', e);
         }
         return '';
     }
 
-    // Hook into Monaco Editor instance
-    function hookMonacoEditor(editor) {
-        if (!editor || editor.__clipboardHooked) return;
-        editor.__clipboardHooked = true;
+    // Nuclear Solution 1: Complete DOM Text Extraction Bypass
+    function extractCompleteTextFromDOM(editor) {
+        try {
+            const model = editor.getModel();
+            if (!model) return '';
 
-        // Force enable copy-paste options
+            // Method 1: Line-by-line extraction using Monaco's model (most reliable)
+            const lineCount = model.getLineCount();
+            const lines = [];
+            
+            for (let i = 1; i <= lineCount; i++) {
+                const lineContent = model.getLineContent(i);
+                lines.push(lineContent);
+            }
+            
+            const completeText = lines.join('\n');
+            console.log('✅ Nuclear DOM extraction successful:', completeText.length, 'characters');
+            return completeText;
+            
+        } catch (error) {
+            console.warn('Nuclear DOM extraction failed:', error);
+            
+            // Fallback: Raw DOM text extraction
+            try {
+                const editorDom = editor.getDomNode();
+                const textLines = editorDom.querySelectorAll('.view-line');
+                const extractedLines = [];
+                
+                textLines.forEach(line => {
+                    const lineText = line.textContent || line.innerText || '';
+                    extractedLines.push(lineText);
+                });
+                
+                return extractedLines.join('\n');
+            } catch (fallbackError) {
+                console.warn('Fallback DOM extraction failed:', fallbackError);
+                return '';
+            }
+        }
+    }
+
+    // Nuclear Solution 1: Extract Selected Text with Complete Token Awareness
+    function extractSelectedTextFromDOM(editor) {
+        try {
+            const selection = editor.getSelection();
+            const model = editor.getModel();
+            
+            if (!selection || !model) {
+                return extractCompleteTextFromDOM(editor);
+            }
+
+            if (selection.isEmpty()) {
+                return extractCompleteTextFromDOM(editor);
+            }
+
+            // Line-by-line extraction for selected range
+            const startLine = selection.startLineNumber;
+            const endLine = selection.endLineNumber;
+            const startColumn = selection.startColumn;
+            const endColumn = selection.endColumn;
+            
+            const lines = [];
+            
+            for (let lineNum = startLine; lineNum <= endLine; lineNum++) {
+                let lineContent = model.getLineContent(lineNum);
+                
+                // Handle partial line selection
+                if (lineNum === startLine && lineNum === endLine) {
+                    // Single line selection
+                    lineContent = lineContent.substring(startColumn - 1, endColumn - 1);
+                } else if (lineNum === startLine) {
+                    // First line of multi-line selection
+                    lineContent = lineContent.substring(startColumn - 1);
+                } else if (lineNum === endLine) {
+                    // Last line of multi-line selection
+                    lineContent = lineContent.substring(0, endColumn - 1);
+                }
+                // Middle lines are included completely
+                
+                lines.push(lineContent);
+            }
+            
+            const selectedText = lines.join('\n');
+            console.log('✅ Nuclear selection extraction:', selectedText.length, 'characters');
+            return selectedText;
+            
+        } catch (error) {
+            console.warn('Nuclear selection extraction failed:', error);
+            return extractCompleteTextFromDOM(editor);
+        }
+    }
+
+    // Nuclear Solution 2: Complete Command System Override
+    function overrideMonacoCommandSystem(editor) {
+        try {
+            // Nuclear approach: Override the entire keyboard service
+            const keyboardService = editor._codeEditorService;
+            const commandService = editor._commandService;
+            
+            // Block Monaco's command registration at source
+            if (commandService && commandService.addCommand) {
+                const originalAddCommand = commandService.addCommand;
+                commandService.addCommand = function(command) {
+                    // Block copy/paste related commands from Monaco
+                    const blockedCommands = [
+                        'editor.action.clipboardCopyAction',
+                        'editor.action.clipboardCutAction', 
+                        'editor.action.clipboardPasteAction',
+                        'editor.action.selectAll'
+                    ];
+                    
+                    if (blockedCommands.includes(command.id)) {
+                        console.log('🚫 Blocked Monaco command:', command.id);
+                        return; // Nuclear block
+                    }
+                    
+                    return originalAddCommand.call(this, command);
+                };
+            }
+            
+            // Override editor's trigger method for nuclear control
+            const originalTrigger = editor.trigger;
+            editor.trigger = function(source, handlerId, payload) {
+                const blockedHandlers = [
+                    'editor.action.clipboardCopyAction',
+                    'editor.action.clipboardCutAction',
+                    'editor.action.clipboardPasteAction', 
+                    'editor.action.selectAll'
+                ];
+                
+                if (blockedHandlers.includes(handlerId)) {
+                    console.log('🚫 Blocked Monaco trigger:', handlerId);
+                    return; // Nuclear block
+                }
+                
+                return originalTrigger.call(this, source, handlerId, payload);
+            };
+            
+            console.log('✅ Nuclear command system override complete');
+            
+        } catch (error) {
+            console.warn('Nuclear command override failed:', error);
+        }
+    }
+
+    // Nuclear Solution 3: Raw Text Insertion with Zero Formatting
+    function performRawTextInsertion(editor, textToInsert) {
+        try {
+            const model = editor.getModel();
+            const selection = editor.getSelection();
+            
+            if (!model || !selection) return false;
+
+            // Nuclear approach: Completely disable ALL Monaco formatting
+            const originalOptions = {
+                formatOnPaste: editor.getOption(monaco.editor.EditorOption.formatOnPaste),
+                formatOnType: editor.getOption(monaco.editor.EditorOption.formatOnType),
+                autoIndent: editor.getOption(monaco.editor.EditorOption.autoIndent),
+                autoClosingBrackets: editor.getOption(monaco.editor.EditorOption.autoClosingBrackets),
+                autoClosingQuotes: editor.getOption(monaco.editor.EditorOption.autoClosingQuotes),
+                autoSurround: editor.getOption(monaco.editor.EditorOption.autoSurround),
+                tabCompletion: editor.getOption(monaco.editor.EditorOption.tabCompletion)
+            };
+
+            // Nuclear disable ALL formatting
+            editor.updateOptions({
+                formatOnPaste: false,
+                formatOnType: false,
+                autoIndent: 'none',
+                autoClosingBrackets: 'never',
+                autoClosingQuotes: 'never', 
+                autoSurround: 'never',
+                tabCompletion: 'off'
+            });
+
+            // Perform nuclear raw insertion
+            const edit = {
+                range: selection,
+                text: textToInsert,
+                forceMoveMarkers: false
+            };
+
+            // Use pushEditOperations for direct model manipulation
+            model.pushEditOperations([], [edit], () => []);
+
+            // Calculate new cursor position manually
+            const lines = textToInsert.split('\n');
+            const newLineNumber = selection.startLineNumber + lines.length - 1;
+            const newColumn = lines.length === 1 
+                ? selection.startColumn + textToInsert.length
+                : lines[lines.length - 1].length + 1;
+                
+            // Set position directly
+            editor.setPosition({
+                lineNumber: newLineNumber,
+                column: newColumn
+            });
+
+            // Restore options after a longer delay to prevent interference
+            setTimeout(() => {
+                try {
+                    editor.updateOptions(originalOptions);
+                } catch (e) {
+                    console.warn('Could not restore Monaco options:', e);
+                }
+            }, 500);
+
+            console.log('✅ Nuclear raw insertion successful');
+            return true;
+            
+        } catch (error) {
+            console.warn('Nuclear raw insertion failed:', error);
+            return false;
+        }
+    }
+
+    // Nuclear Solution 4: Selection Range Hijacking
+    function performNuclearFullSelection(editor) {
+        try {
+            const model = editor.getModel();
+            if (!model) return false;
+
+            // Method 1: Direct model range override
+            const lineCount = model.getLineCount();
+            const lastLineLength = model.getLineContent(lineCount).length;
+            
+            const fullRange = new monaco.Range(1, 1, lineCount, lastLineLength + 1);
+            
+            // Nuclear override: Force selection regardless of Monaco's state
+            editor.setSelection(fullRange);
+            
+            // Double-ensure with focus
+            editor.focus();
+            
+            // Triple-ensure with revision ID to force Monaco to acknowledge
+            editor.revealRange(fullRange);
+            
+            console.log('✅ Nuclear full selection applied');
+            return true;
+            
+        } catch (error) {
+            console.warn('Nuclear full selection failed:', error);
+            return false;
+        }
+    }
+
+    // Nuclear Monaco Editor Hooking with Complete System Override
+    function hookMonacoEditorNuclear(editor) {
+        if (!editor || editor.__orangeNuclearHooked) return;
+        editor.__orangeNuclearHooked = true;
+
+        console.log('🍊 Nuclear Monaco hooking initiated');
+
+        // Register editor in our tracking system
+        const editorId = Date.now() + Math.random();
+        editorRegistry.set(editorId, editor);
+
+        // Get editor DOM node
+        const editorDomNode = editor.getDomNode();
+        if (!editorDomNode) return;
+
+        // Nuclear Solution 2: Override Command System
+        overrideMonacoCommandSystem(editor);
+
+        // Nuclear keyboard event interception - complete override
+        editorDomNode.addEventListener('keydown', async (e) => {
+            const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+            const isCtrlCmd = isMac ? e.metaKey : e.ctrlKey;
+
+            if (!isCtrlCmd) return; // Let Monaco handle non-command keys
+
+            switch (e.key.toLowerCase()) {
+                case 'a': // Select All - Nuclear Override
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    performNuclearFullSelection(editor);
+                    break;
+
+                case 'c': // Copy - Nuclear Override
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    const textToCopy = extractSelectedTextFromDOM(editor);
+                    if (textToCopy) {
+                        await copyToClipboard(textToCopy);
+                        console.log('✅ Nuclear copy:', textToCopy.length, 'chars');
+                    }
+                    break;
+
+                case 'x': // Cut - Nuclear Override
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    const selection = editor.getSelection();
+                    if (selection && !selection.isEmpty()) {
+                        const textToCut = extractSelectedTextFromDOM(editor);
+                        if (textToCut) {
+                            await copyToClipboard(textToCut);
+                            
+                            // Nuclear deletion using raw model operation
+                            const model = editor.getModel();
+                            model.pushEditOperations([], [{
+                                range: selection,
+                                text: ''
+                            }], () => []);
+                            
+                            console.log('✅ Nuclear cut successful');
+                        }
+                    }
+                    break;
+
+                case 'v': // Paste - Nuclear Override
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    const textToInsert = await pasteFromClipboard();
+                    if (textToInsert) {
+                        const success = performRawTextInsertion(editor, textToInsert);
+                        if (success) {
+                            console.log('✅ Nuclear paste:', textToInsert.length, 'chars');
+                        }
+                    }
+                    break;
+
+                default:
+                    // Let Monaco handle other commands
+                    break;
+            }
+        }, { 
+            capture: true,
+            passive: false
+        });
+
+        // Nuclear event blocking for copy/paste events
+        ['copy', 'cut', 'paste'].forEach(eventType => {
+            editorDomNode.addEventListener(eventType, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // Events are handled by keydown listener
+            }, { 
+                capture: true,
+                passive: false
+            });
+        });
+
+        // Configure Monaco for minimal interference
         try {
             editor.updateOptions({
                 readOnly: false,
                 domReadOnly: false,
                 contextmenu: true,
                 selectOnLineNumbers: true,
-                dragAndDrop: true
+                dragAndDrop: true,
+                copyWithSyntaxHighlighting: false,
+                formatOnPaste: false,
+                formatOnType: false,
+                autoIndent: 'none',
+                autoClosingBrackets: 'never',
+                autoClosingQuotes: 'never',
+                autoSurround: 'never'
             });
         } catch (e) {
-            // Could not update editor options
+            console.warn('Could not configure Monaco options:', e);
         }
 
-        // Hook keyboard events
-        editor.onKeyDown(async (e) => {
-            const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-            const isCtrlCmd = isMac ? e.metaKey : e.ctrlKey;
-
-            // Copy: Ctrl/Cmd + C
-            if (isCtrlCmd && e.keyCode === 67) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                try {
-                    // Try Monaco's built-in copy action first
-                    editor.trigger('keyboard', 'editor.action.clipboardCopyAction');
-
-                    // Fallback to manual selection copy
-                    const selection = editor.getSelection();
-                    if (selection && !selection.isEmpty()) {
-                        const selectedText = editor.getModel().getValueInRange(selection);
-                        await copyToClipboard(selectedText);
-                    } else {
-                        // Copy entire content if nothing selected
-                        const allText = editor.getValue();
-                        await copyToClipboard(allText);
-                    }
-                } catch (error) {
-                    // Copy action failed
-                }
-
-                return false;
-            }
-
-            // Paste: Ctrl/Cmd + V
-            if (isCtrlCmd && e.keyCode === 86) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                try {
-                    // Try Monaco's built-in paste action first
-                    editor.trigger('keyboard', 'editor.action.clipboardPasteAction');
-
-                    // Fallback to manual paste
-                    const clipText = await pasteFromClipboard();
-                    if (clipText) {
-                        const selection = editor.getSelection();
-                        editor.executeEdits('paste', [{
-                            range: selection,
-                            text: clipText
-                        }]);
-                    }
-                } catch (error) {
-                    // Paste action failed
-                }
-
-                return false;
-            }
-
-            // Select All: Ctrl/Cmd + A
-            if (isCtrlCmd && e.keyCode === 65) {
-                try {
-                    editor.trigger('keyboard', 'editor.action.selectAll');
-                } catch (error) {
-                    // Select all failed
-                }
-            }
-        });
+        clipboardEnabled = true;
+        console.log('🎉 Nuclear Monaco integration complete');
     }
 
-    // Detect and hook Monaco editors
-    function detectAndHookMonaco() {
+    // Nuclear Monaco Detection and Hooking
+    function detectAndHookMonacoNuclear() {
         if (monacoHooked) return;
 
-        // Check if Monaco is available
         if (typeof window.monaco !== 'undefined' && window.monaco.editor) {
             monacoHooked = true;
+            console.log('🔍 Monaco detected - beginning nuclear integration');
 
             // Hook existing editors
             try {
-                const models = window.monaco.editor.getModels();
-                models.forEach(model => {
-                    const editors = window.monaco.editor.getEditors
-                        ? window.monaco.editor.getEditors(model)
-                        : [];
-                    editors.forEach(hookMonacoEditor);
-                });
+                if (window.monaco.editor.getEditors) {
+                    window.monaco.editor.getEditors().forEach(hookMonacoEditorNuclear);
+                }
             } catch (e) {
-                // Could not hook existing editors
+                console.warn('Error hooking existing editors:', e);
             }
 
-            // Hook new editor creation
+            // Nuclear override of editor creation
             const originalCreate = window.monaco.editor.create;
             window.monaco.editor.create = function(container, options = {}, ...args) {
-                // Force enable copy-paste in options
-                options.readOnly = false;
-                options.domReadOnly = false;
-                options.contextmenu = true;
+                // Force nuclear-friendly options
+                options.formatOnPaste = false;
+                options.formatOnType = false;
+                options.autoIndent = 'none';
+                options.copyWithSyntaxHighlighting = false;
 
                 const editor = originalCreate.call(this, container, options, ...args);
-
-                // Add delay to ensure editor is fully initialized
-                setTimeout(() => hookMonacoEditor(editor), 100);
-
+                
+                // Nuclear hook with delay
+                setTimeout(() => hookMonacoEditorNuclear(editor), 200);
+                
                 return editor;
             };
 
-            clipboardEnabled = true;
+            // Also override diff editor creation
+            if (window.monaco.editor.createDiffEditor) {
+                const originalCreateDiff = window.monaco.editor.createDiffEditor;
+                window.monaco.editor.createDiffEditor = function(container, options = {}, ...args) {
+                    const diffEditor = originalCreateDiff.call(this, container, options, ...args);
+                    
+                    setTimeout(() => {
+                        try {
+                            const originalEditor = diffEditor.getOriginalEditor();
+                            const modifiedEditor = diffEditor.getModifiedEditor();
+                            if (originalEditor) hookMonacoEditorNuclear(originalEditor);
+                            if (modifiedEditor) hookMonacoEditorNuclear(modifiedEditor);
+                        } catch (e) {
+                            console.warn('Error hooking diff editors:', e);
+                        }
+                    }, 200);
+                    
+                    return diffEditor;
+                };
+            }
+
+            console.log('🎯 Nuclear Monaco hooks installed');
         }
     }
 
-    // INITIALIZATION
-    function initialize() {
-        // Layer 1: Resilient cleanup and fallbacks
+    // Master initialization function
+    function initializeNuclear() {
+        console.log('🍊 Orange Nuclear Monaco Liberator initializing...');
+        
+        // Layer 1: Complete DOM liberation
         injectSelectionCSS();
         blockEventListeners();
-        setupDOMCleanup();
 
-        // Layer 2: API-level hooks
-        detectAndHookMonaco();
+        // Layer 2: Nuclear Monaco integration
+        detectAndHookMonacoNuclear();
+        
+        console.log('✅ Nuclear initialization complete');
     }
 
-    // Run immediately and on DOM changes
-    initialize();
+    // Multi-stage nuclear initialization
+    initializeNuclear();
 
-    // Multiple initialization points for reliability
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
+        document.addEventListener('DOMContentLoaded', initializeNuclear);
     }
 
     window.addEventListener('load', () => {
-        setTimeout(initialize, 100);
-        setTimeout(initialize, 500);
-        setTimeout(initialize, 1000);
+        setTimeout(initializeNuclear, 100);
+        setTimeout(initializeNuclear, 500);
+        setTimeout(initializeNuclear, 1000);
+        setTimeout(initializeNuclear, 2000);
+        setTimeout(initializeNuclear, 5000); // Extended delay for complex sites
     });
 
-    // Watch for dynamic Monaco loading
-    const loadObserver = new MutationObserver(() => {
+    // Continuous Monaco detection
+    const nuclearObserver = new MutationObserver(() => {
         if (!monacoHooked && typeof window.monaco !== 'undefined') {
-            detectAndHookMonaco();
+            detectAndHookMonacoNuclear();
         }
     });
 
-    loadObserver.observe(document.documentElement, {
+    nuclearObserver.observe(document.documentElement, {
         childList: true,
         subtree: true
     });
 
-    // Manual trigger for debugging
-    window.enableMonacoClipboard = initialize;
+    // Debug functions
+    window.enableMonacoClipboard = initializeNuclear;
     window.checkMonacoStatus = () => {
         return {
             monacoAvailable: typeof window.monaco !== 'undefined',
             hooksInstalled: monacoHooked,
-            clipboardEnabled: clipboardEnabled
+            clipboardEnabled: clipboardEnabled,
+            editorsTracked: editorRegistry.size,
+            version: 'NUCLEAR-4.0',
+            features: [
+                'Complete DOM Bypass',
+                'Nuclear Command Override',
+                'Raw Text Insertion',
+                'Selection Range Hijacking',
+                'Line-by-Line Processing',
+                'Zero Monaco Interference'
+            ]
         };
     };
 
-    // Emergency keyboard shortcut (Ctrl+Shift+M)
+    // Emergency nuclear reset
+    window.nuclearReset = () => {
+        console.log('💥 NUCLEAR RESET INITIATED');
+        monacoHooked = false;
+        editorRegistry.clear();
+        initializeNuclear();
+    };
+
+    // Emergency activation
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.keyCode === 77) {
-            initialize();
+            console.log('🚨 Emergency nuclear re-initialization');
+            window.nuclearReset();
         }
     });
 
+    console.log('🍊💥 Orange Nuclear Monaco Liberator v4.0 LOADED - ALL SYSTEMS BYPASSED');
 })();
